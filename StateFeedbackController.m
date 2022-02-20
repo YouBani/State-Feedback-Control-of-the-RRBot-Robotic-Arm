@@ -21,8 +21,8 @@ display(sol.theta2)
 % [pi,pi,0,0]
 
 % Question b.
-u=[u1;u2];
-x=[theta1,theta2,theta1_dot,theta2_dot];
+u = [u1;u2];
+x = [theta1,theta2,theta1_dot,theta2_dot];
 x1_dot = theta1_dot;
 x2_dot= theta2_dot;
 x3_dot= (I2*u1 - I2*u2 + m2*r2^2*u1 - m2*r2^2*u2 + l1*m2^2*r2^3*theta1_dot^2*sin(theta2) + l1*m2^2*r2^3*theta2_dot^2*sin(theta2) + I2*g*l1*m1*sin(theta1) + I2*g*m1*r1*sin(theta1) - l1*m2*r2*u2*cos(theta2) + 2*l1*m2^2*r2^3*theta1_dot*theta2_dot*sin(theta2) + l1^2*m2^2*r2^2*theta1_dot^2*cos(theta2)*sin(theta2) - g*l1*m2^2*r2^2*sin(theta1 + theta2)*cos(theta2) + I2*l1*m2*r2*theta1_dot^2*sin(theta2) + I2*l1*m2*r2*theta2_dot^2*sin(theta2) + g*l1*m1*m2*r2^2*sin(theta1) + g*m1*m2*r1*r2^2*sin(theta1) + 2*I2*l1*m2*r2*theta1_dot*theta2_dot*sin(theta2))/(- l1^2*m2^2*r2^2*cos(theta2)^2 + l1^2*m2^2*r2^2 + I2*l1^2*m2 + m1*m2*r1^2*r2^2 + I1*m2*r2^2 + I2*m1*r1^2 + I1*I2);
@@ -33,14 +33,14 @@ X_dot = [x1_dot;x2_dot;x3_dot;x4_dot];
 A = jacobian(X_dot, x);
 B = jacobian(X_dot, u);
 
-A1 = subs(A,[theta1,theta2,theta1_dot,theta2_dot],[0,0,0,0]);
-B1 = subs(B,[theta1,theta2,theta1_dot,theta2_dot],[0,0,0,0]);
+A = subs(A,[theta1,theta2,theta1_dot,theta2_dot],[0,0,0,0]);
+B = subs(B,[theta1,theta2,theta1_dot,theta2_dot],[0,0,0,0]);
 
-A1 = double(A1)
-B1 = double(B1)
+A = double(A)
+B = double(B)
 
 % Question c.
-eigA1 = eig(A1) % Unstable at [0,0,0,0]
+eigA1 = eig(A) % Unstable at [0,0,0,0]
 
 %Stability for the other Equlibrium Points. There are a total of 4
 %equlibrium points. We already checked for the stablity of the (0,0,0,0)
@@ -70,6 +70,73 @@ A4 = double(A4);
 eigA4 = eig(A4) % Unstable [pi,pi,0,0]
 
 % Question d.
-rankC = rank(ctrb(A1,B1)) % Controllable because it is full-rank
+rankC = rank(ctrb(A,B)) % Controllable because it is full-rank
 
 % Question e.
+syms k11 k12 k13 k14 k21 k22 k23 k24 lambda
+K = [k11,k12,k13,k14; k21,k22,k23,k24];
+% Acl = A -(B*K);
+% AclPoly = simplify(det(Acl - lambda*eye(4)))
+
+lambda = [-2, -4, -1 - 1i, -1 + 1i];
+Kvalues = place(A, B, lambda)
+
+% Question f.
+T = 10;
+[t,y] = ode45(@ode_link, [0,T], [pi/6,pi/4,0,0]);
+K = [24.7907,12.7142,5.7498,6.0241; 6.3156,7.4114,1.7584,2.1889];
+for i = 1:size(y,1)
+    u(i)= -(K(1,1)*y(i,1) + K(1,2)*y(i,2)+ K(1,3)*y(i,3) + K(1,4)*y(i,4));
+    g(i)= -(K(2,1)*y(i,1) + K(2,2)*y(i,2)+ K(2,3)*y(i,3) + K(2,4)*y(i,4));
+end
+
+figure(2)
+plot(t,y);
+
+figure(1)
+subplot(2,2,1);
+plot(t,rad2deg(y(:,1)),'b');
+xlabel('t', 'FontSize',14)
+ylabel('theta1','FontSize',14);
+
+subplot(2,2,2);
+plot(t,rad2deg(y(:,2)),'r');
+xlabel('t', 'FontSize',14)
+ylabel('theta2','FontSize',14)
+
+subplot(2,2,3);
+plot(t,rad2deg(y(:,3)),'b');
+xlabel('t', 'FontSize',14)
+ylabel('theta1 dot','FontSize',14)
+
+subplot(2,2,4);
+plot(t,rad2deg(y(:,4)),'r');
+xlabel('t', 'FontSize',14)
+ylabel('theta2 dot','FontSize',14)
+
+
+function dX = ode_link(t,X)
+m1=1;m2=1; l1=1; l2=1 ;r1=0.45; r2=0.45; g=9.81 ;I2= 0.084; I1= 0.084;
+dX= zeros(4,1);
+X=num2cell(X);
+[theta1, theta2, theta1_dot, theta2_dot] = deal(X{:});
+
+if abs(theta1)>2*pi
+    theta1= mod(theta1,2*pi);
+
+end
+if abs(theta2)>2*pi
+    theta2= mod(theta2,2*pi);
+end
+K = [24.7907,12.7142,5.7498,6.0241; 6.3156,7.4114,1.7584,2.1889];
+U = -K*[theta1;theta2;theta1_dot;theta2_dot];
+
+u1 = [U(1,:)];
+u2 = [U(2,:)];
+dX(1) = theta1_dot;
+dX(2) = theta2_dot;
+dX(3) = (I2*u1 - I2*u2 + m2*r2^2*u1 - m2*r2^2*u2 + l1*m2^2*r2^3*theta1_dot^2*sin(theta2) + l1*m2^2*r2^3*theta2_dot^2*sin(theta2) + I2*g*l1*m1*sin(theta1) + I2*g*m1*r1*sin(theta1) - l1*m2*r2*u2*cos(theta2) + 2*l1*m2^2*r2^3*theta1_dot*theta2_dot*sin(theta2) + l1^2*m2^2*r2^2*theta1_dot^2*cos(theta2)*sin(theta2) - g*l1*m2^2*r2^2*sin(theta1 + theta2)*cos(theta2) + I2*l1*m2*r2*theta1_dot^2*sin(theta2) + I2*l1*m2*r2*theta2_dot^2*sin(theta2) + g*l1*m1*m2*r2^2*sin(theta1) + g*m1*m2*r1*r2^2*sin(theta1) + 2*I2*l1*m2*r2*theta1_dot*theta2_dot*sin(theta2))/(- l1^2*m2^2*r2^2*cos(theta2)^2 + l1^2*m2^2*r2^2 + I2*l1^2*m2 + m1*m2*r1^2*r2^2 + I1*m2*r2^2 + I2*m1*r1^2 + I1*I2);
+
+dX(4) = -(I2*u1 - I1*u2 - I2*u2 - l1^2*m2*u2 - m1*r1^2*u2 + m2*r2^2*u1 - m2*r2^2*u2 + l1*m2^2*r2^3*theta1_dot^2*sin(theta2) + l1^3*m2^2*r2*theta1_dot^2*sin(theta2) + l1*m2^2*r2^3*theta2_dot^2*sin(theta2) - g*l1^2*m2^2*r2*sin(theta1 + theta2) - I1*g*m2*r2*sin(theta1 + theta2) + I2*g*l1*m1*sin(theta1) + I2*g*m1*r1*sin(theta1) + l1*m2*r2*u1*cos(theta2) - 2*l1*m2*r2*u2*cos(theta2) + 2*l1*m2^2*r2^3*theta1_dot*theta2_dot*sin(theta2) + 2*l1^2*m2^2*r2^2*theta1_dot^2*cos(theta2)*sin(theta2) + l1^2*m2^2*r2^2*theta2_dot^2*cos(theta2)*sin(theta2) - g*l1*m2^2*r2^2*sin(theta1 + theta2)*cos(theta2) - g*m1*m2*r1^2*r2*sin(theta1 + theta2) + I1*l1*m2*r2*theta1_dot^2*sin(theta2) + I2*l1*m2*r2*theta1_dot^2*sin(theta2) + I2*l1*m2*r2*theta2_dot^2*sin(theta2) + g*l1*m1*m2*r2^2*sin(theta1) + g*m1*m2*r1*r2^2*sin(theta1) + 2*l1^2*m2^2*r2^2*theta1_dot*theta2_dot*cos(theta2)*sin(theta2) + g*l1^2*m1*m2*r2*cos(theta2)*sin(theta1) + l1*m1*m2*r1^2*r2*theta1_dot^2*sin(theta2) + 2*I2*l1*m2*r2*theta1_dot*theta2_dot*sin(theta2) + g*l1*m1*m2*r1*r2*cos(theta2)*sin(theta1))/(- l1^2*m2^2*r2^2*cos(theta2)^2 + l1^2*m2^2*r2^2 + I2*l1^2*m2 + m1*m2*r1^2*r2^2 + I1*m2*r2^2 + I2*m1*r1^2 + I1*I2);
+
+end
