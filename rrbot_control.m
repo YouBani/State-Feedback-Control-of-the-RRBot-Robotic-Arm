@@ -31,28 +31,29 @@ i = 1;
 while(t < 10)
     t = toc;
 
-    % reading the joint states
+    % read the joint states
     jointData = receive(JointStates);
-    x = [jointData.Position(1);jointData.Position(2);
+    x = [wrapToPi(jointData.Position(1));wrapToPi(jointData.Position(2));
         jointData.Velocity(1);jointData.Velocity(2)];
+
     k1=[23.5850,5.8875,5.1470,2.6104];
     k2= [5.8875, 4.9875,1.5543,0.9970];
-
-    % State feedback controller 
+    % inspect the "jointData" variable in MATLAB to get familiar with its
+    % structure
+    % design your state feedback controller in the following
     tau1.Data = -k1*x;
     tau2.Data = -k2*x;
     
     send(j1_effort,tau1);
     send(j2_effort,tau2);
-    
-    % Sample data to be plotted 
-    g1(i) = jointData.Position(1);
-    g2(i) = jointData.Position(2);
+    % you can sample data here to be plotted at the end
+    g1(i) = wrapToPi(jointData.Position(1))
+    g2(i) = wrapToPi(jointData.Position(2))
     g3(i) = jointData.Velocity(1);
     g4(i) = jointData.Velocity(2);
     
-    u1(i) = tau1.Data;
-    u2(i) = tau2.Data;
+    force1(i) = tau1.Data;
+    force2(i) = tau2.Data;
     
     time(i) = t;
     
@@ -82,13 +83,13 @@ ylabel('theta2 dot','FontSize',14)
 
 figure(2)
 subplot(2,2,1);
-plot(time,u1);
+plot(time,force1);
 xlabel('t');
 ylabel('u1');
 
 figure(2)
 subplot(2,2,2);
-plot(time,u2);
+plot(time,force2);
 xlabel('t');
 ylabel('u2');
 

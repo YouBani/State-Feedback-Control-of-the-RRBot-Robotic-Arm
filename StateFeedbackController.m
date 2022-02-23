@@ -3,7 +3,7 @@ syms m1 m2 theta1 theta2 r1 r2 l1 l2 I1 I2 theta1_dot theta1_ddot theta2_dot the
 
 m1=1; m2=1; l1=1; l2=1 ;r1=0.45; r2=0.45; g=9.81 ;I2= 0.084; I1= 0.084;
 
-% Finding the equilibrium points 
+% Finding the equilibrium points of the robot
 eq1= theta1_ddot*(m2*l1^2 + 2*m2*cos(theta2)*l1*r2 + m1*r1^2 + m2*r2^2 + I1 + I2) - theta2_dot*(l1*m2*r2*theta1_dot*sin(theta2) + l1*m2*r2*sin(theta2)*(theta1_dot + theta2_dot)) - u1 + theta2_ddot*(m2*r2^2 + l1*m2*cos(theta2)*r2 + I2) - g*m2*r2*sin(theta1 + theta2) - g*l1*m1*sin(theta1) - g*m1*r1*sin(theta1);
 eq2= theta2_ddot*(m2*r2^2 + I2) - u2 + theta1_ddot*(m2*r2^2 + l1*m2*cos(theta2)*r2 + I2) - g*m2*r2*sin(theta1 + theta2) + l1*m2*r2*theta1_dot*sin(theta2)*(theta1_dot + theta2_dot) - l1*m2*r2*theta1_dot*theta2_dot*sin(theta2);
 
@@ -20,7 +20,7 @@ display(sol.theta2)
 % [0,pi,0,0]
 % [pi,pi,0,0]
 
-% The symbolic reprensatation of the state and input matrix 
+% Deriving the Jacobian linearization of the symbolic state-space representation
 u = [u1;u2];
 x = [theta1,theta2,theta1_dot,theta2_dot];
 x1_dot = theta1_dot;
@@ -39,7 +39,9 @@ B = subs(B,[theta1,theta2,theta1_dot,theta2_dot],[0,0,0,0]);
 A = double(A)
 B = double(B)
 
-% Stability around each equilibrium point 
+% Investigating the stability properties of the linearized system around 
+% each of the equilibrium points 
+equilibrium points found 
 eigA1 = eig(A) % Unstable at [0,0,0,0]
 
 %Stability for the other Equlibrium Points. There are a total of 4
@@ -68,10 +70,12 @@ A4 = double(A4);
 
 eigA4 = eig(A4) % Unstable [pi,pi,0,0]
 
-% Controllability 
+% Investigating the controllability of the linearized system around the 
+% equilibrium point corresponding to the “upward” configuration
 rankC = rank(ctrb(A,B)) % Controllable because it is full-rank
 
-% State-feedback control
+% Designing a state-feedback control to stabilize the system around the
+% upward equilibrium point.
 syms k11 k12 k13 k14 k21 k22 k23 k24 lambda
 K = [k11,k12,k13,k14; k21,k22,k23,k24];
 % Acl = A -(B*K);
